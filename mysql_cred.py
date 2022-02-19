@@ -1,4 +1,3 @@
-# Database Creds
 import mysql.connector
 
 # Multicraft Cred
