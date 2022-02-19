@@ -2,8 +2,8 @@ import requests
 import json
 import random
 
-def con_create_allocation(apikey, nodeid, ip, port):
-    url = 'https://dev-ptero.ploxhost.com/api/application/nodes/{0}/allocations'.format(nodeid)
+def con_create_allocation(ptero_api_host, apikey, nodeid, ip, port):
+    url = '{0}/api/application/nodes/{1}/allocations'.format(ptero_api_host, nodeid)
     headers = {
         "Authorization": "Bearer {0}".format(apikey),
         "Accept": "application/json",
@@ -15,10 +15,10 @@ def con_create_allocation(apikey, nodeid, ip, port):
     if response.status_code != 204:
         exit("Error while creating allocation")
     else:
-        print("Pterodactyl allocation created:")
+        print("[INFO] Pterodactyl allocation created")
 
-def con_get_allocation_id(apikey, nodeid, ip, port):
-    url = 'https://dev-ptero.ploxhost.com/api/application/nodes/{0}/allocations'.format(nodeid)
+def con_get_allocation_id(ptero_api_host, apikey, nodeid, ip, port):
+    url = '{0}/api/application/nodes/{0}/allocations'.format(ptero_api_host, nodeid)
     headers = {
         "Authorization": "Bearer {0}".format(apikey),
         "Accept": "application/json",
@@ -33,8 +33,8 @@ def con_get_allocation_id(apikey, nodeid, ip, port):
         if i['attributes']['ip'] == ip and i['attributes']['port'] == int(port):
             return (i['attributes']['id'])
 
-def con_user_create(apikey, email, first_name, last_name):
-    url = 'https://dev-ptero.ploxhost.com/api/application/users'
+def con_user_create(ptero_api_host, apikey, email, first_name, last_name):
+    url = '{0}/api/application/users'.format(ptero_api_host)
     headers = {
         "Authorization": "Bearer {0}".format(apikey),
         "Accept": "application/json",
@@ -53,10 +53,10 @@ def con_user_create(apikey, email, first_name, last_name):
     if response.status_code != 201 and response.status_code != 422:
         exit("Error while creating user")
     else:
-        print("Pterodactyl user account created")
+        print("[INFO] Pterodactyl user account created")
 
-def con_get_user_id(apikey, email):
-    url = 'https://dev-ptero.ploxhost.com/api/application/users'
+def con_get_user_id(ptero_api_host, apikey, email):
+    url = '{0}/api/application/users'.format(ptero_api_host)
     headers = {
         "Authorization": "Bearer {0}".format(apikey),
         "Accept": "application/json",
@@ -71,10 +71,9 @@ def con_get_user_id(apikey, email):
         if i['attributes']['email'] == email:
             return (i['attributes']['id'])
 
-def con_create_server(apikey, name, user, nestid, egg, memory, swap, disk, io, cpu, databases, backups, allocations, allocation_id):
-    print("\nDetecting docker image & startup command\n")
+def con_create_server(ptero_api_host, apikey, name, user, nestid, egg, memory, swap, disk, io, cpu, databases, backups, allocations, allocation_id):
     # Retrieve egg information
-    url = 'https://dev-ptero.ploxhost.com/api/application/nests/{0}/eggs/{1}?include=variables'.format(nestid, egg)
+    url = '{0}/api/application/nests/{1}/eggs/{2}?include=variables'.format(ptero_api_host, nestid, egg)
     headers = {
         "Authorization": "Bearer {0}".format(apikey),
         "Accept": "application/json",
@@ -94,7 +93,7 @@ def con_create_server(apikey, name, user, nestid, egg, memory, swap, disk, io, c
         default = i['attributes']['default_value']
         envdata[env] = default
 
-    url = 'https://dev-ptero.ploxhost.com/api/application/servers'
+    url = '{0}/api/application/servers'.format(ptero_api_host)
     headers = {
         "Authorization": "Bearer {0}".format(apikey),
         "Accept": "application/json",
@@ -106,9 +105,25 @@ def con_create_server(apikey, name, user, nestid, egg, memory, swap, disk, io, c
     data = json.loads(response.text)
 
     if response.status_code != 201:
+        print(response.text)
         exit("Error while creating server")
     else:
-        print("Pterodactyl server created:")
-        print("\nID: " + data['attributes']['id'] + "\n")
+        print("[INFO] Pterodactyl server created")
+        return data['attributes']['uuid'], data['attributes']['external_id'], data['attributes']['id'], data['attributes']['identifier']
 
-
+def create_ptero_db(ptero_api_host, apikey, db_name, serverid, databaseid):
+    url = '{0}/api/application/servers/{1}/databases?include=password'.format(ptero_api_host, serverid)
+    headers = {
+        "Authorization": "Bearer {0}".format(apikey),
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "cookie": "pterodactyl_session=eyJpdiI6InhIVXp5ZE43WlMxUU1NQ1pyNWRFa1E9PSIsInZhbHVlIjoiQTNpcE9JV3FlcmZ6Ym9vS0dBTmxXMGtST2xyTFJvVEM5NWVWbVFJSnV6S1dwcTVGWHBhZzdjMHpkN0RNdDVkQiIsIm1hYyI6IjAxYTI5NDY1OWMzNDJlZWU2OTc3ZDYxYzIyMzlhZTFiYWY1ZjgwMjAwZjY3MDU4ZDYwMzhjOTRmYjMzNDliN2YifQ%253D%253D"
+    }
+    payload = {'database': '{0}'.format(db_name), 'remote': '%', 'host': '{0}'.format(databaseid)}
+    response = requests.request('POST', url, json=payload, headers=headers)
+    data = json.loads(response.text)
+    if response.status_code != 201:
+        exit("Error while creating database")
+    else:
+        print("[INFO] Pterodactyl database created")
+        return data['attributes']['database'], data['attributes']['username'], data['attributes']['relationships']['password']['attributes']['password']
