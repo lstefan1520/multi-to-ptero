@@ -1,0 +1,5 @@
+mysql-connector-python~=8.0.27
+requests~=2.26.0
+json
+random
+os
