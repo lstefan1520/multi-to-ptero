@@ -1,8 +1,6 @@
 # multi-to-ptero
 A project to help easily migrate servers from Multicraft to Pterodactyl Panel
 
-I have open sourced this project to help other companies and people easily migrate servers. I do not intend on updating in this in the future. However, if you are looking to get help with this, feel free to reach out. My email is markd@plox.host.
-
 ! Use this script at YOUR own risk. We have heavily tested everything here, however I can not guarantee anything. 
 
 ## Features of this script
